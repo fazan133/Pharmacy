@@ -34,25 +34,25 @@ export function StockLedgerPage() {
     { 
       field: 'created_at', 
       headerName: 'Date/Time', 
-      width: 150,
+      flex: 0.8, minWidth: 100,
       valueFormatter: (value) => format(new Date(value), 'dd/MM/yyyy HH:mm'),
     },
     { 
       field: 'product_name', 
       headerName: 'Product', 
-      flex: 1,
+      flex: 1.2, minWidth: 100,
       valueGetter: (_, row) => row.batch?.product?.name,
     },
     { 
       field: 'batch_no', 
       headerName: 'Batch', 
-      width: 100,
+      flex: 0.5, minWidth: 70,
       valueGetter: (_, row) => row.batch?.batch_no,
     },
     { 
       field: 'transaction_type', 
       headerName: 'Type', 
-      width: 130,
+      flex: 0.6, minWidth: 80,
       renderCell: (params) => (
         <Chip 
           label={params.value.replace('_', ' ')} 
@@ -65,7 +65,7 @@ export function StockLedgerPage() {
     { 
       field: 'qty', 
       headerName: 'Qty', 
-      width: 80,
+      flex: 0.4, minWidth: 60,
       type: 'number',
       renderCell: (params) => {
         const isIn = params.row.transaction_type.includes('in') || params.row.transaction_type === 'purchase';
@@ -83,18 +83,18 @@ export function StockLedgerPage() {
     { 
       field: 'balance_qty', 
       headerName: 'Balance', 
-      width: 90,
+      flex: 0.4, minWidth: 60,
       type: 'number',
     },
     { 
       field: 'reference_type', 
       headerName: 'Reference', 
-      width: 120,
+      flex: 0.5, minWidth: 70,
     },
     { 
       field: 'notes', 
       headerName: 'Notes', 
-      flex: 1,
+      flex: 1, minWidth: 80,
     },
   ];
 

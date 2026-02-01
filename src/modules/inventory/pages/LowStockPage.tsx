@@ -8,12 +8,12 @@ export function LowStockPage() {
   const { data, isLoading, error, refetch } = useLowStockProducts();
 
   const columns: GridColDef[] = [
-    { field: 'code', headerName: 'Code', width: 100 },
-    { field: 'name', headerName: 'Product', flex: 1 },
+    { field: 'code', headerName: 'Code', flex: 0.5, minWidth: 70 },
+    { field: 'name', headerName: 'Product', flex: 1.5, minWidth: 120 },
     { 
       field: 'current_stock', 
       headerName: 'Current Stock', 
-      width: 120,
+      flex: 0.6, minWidth: 80,
       type: 'number',
       renderCell: (params) => (
         <Typography variant="body2" fontWeight="bold" color="error">
@@ -24,13 +24,13 @@ export function LowStockPage() {
     { 
       field: 'reorder_level', 
       headerName: 'Reorder Level', 
-      width: 130,
+      flex: 0.6, minWidth: 80,
       type: 'number',
     },
     { 
       field: 'shortage', 
       headerName: 'Shortage', 
-      width: 100,
+      flex: 0.5, minWidth: 70,
       type: 'number',
       renderCell: (params) => (
         <Typography variant="body2" fontWeight="bold" color="warning.main">
@@ -41,7 +41,7 @@ export function LowStockPage() {
     { 
       field: 'mrp', 
       headerName: 'MRP', 
-      width: 90,
+      flex: 0.5, minWidth: 70,
       type: 'number',
       valueFormatter: (value) => value ? `₹${value}` : '-',
     },

@@ -119,6 +119,13 @@ export const theme = createTheme({
           '& .MuiDataGrid-columnHeader:focus': {
             outline: 'none',
           },
+          '& .MuiDataGrid-cell': {
+            display: 'flex',
+            alignItems: 'center',
+          },
+          '& .MuiDataGrid-cell--textRight': {
+            justifyContent: 'flex-end',
+          },
         },
         columnHeaders: {
           backgroundColor: '#f8f9fa',
@@ -127,6 +134,24 @@ export const theme = createTheme({
         row: {
           '&:hover': {
             backgroundColor: alpha('#1976d2', 0.04),
+          },
+        },
+      },
+    },
+    MuiAutocomplete: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: '#f8fafc',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+        },
+        listbox: {
+          '& .MuiAutocomplete-option': {
+            '&:hover': {
+              backgroundColor: alpha('#1976d2', 0.08),
+            },
+            '&[aria-selected="true"]': {
+              backgroundColor: alpha('#1976d2', 0.12),
+            },
           },
         },
       },

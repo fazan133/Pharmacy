@@ -36,8 +36,8 @@ export function DrugFormulasPage() {
   };
 
   const columns: GridColDef[] = [
-    { field: 'code', headerName: 'Code', width: 100 },
-    { field: 'name', headerName: 'Salt/Composition', flex: 1 },
+    { field: 'code', headerName: 'Code', flex: 0.5, minWidth: 70 },
+    { field: 'name', headerName: 'Salt/Composition', flex: 2, minWidth: 150 },
     {
       field: 'is_active',
       headerName: 'Status',

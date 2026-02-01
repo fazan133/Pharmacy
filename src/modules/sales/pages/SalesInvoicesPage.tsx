@@ -27,7 +27,7 @@ export function SalesInvoicesPage() {
     { 
       field: 'invoice_no', 
       headerName: 'Invoice No', 
-      width: 150,
+      flex: 0.8, minWidth: 100,
       renderCell: (params) => (
         <Typography variant="body2" color="primary" sx={{ fontWeight: 500 }}>
           {params.value}
@@ -37,32 +37,32 @@ export function SalesInvoicesPage() {
     { 
       field: 'invoice_date', 
       headerName: 'Date', 
-      width: 100,
+      flex: 0.5, minWidth: 80,
       valueFormatter: (value) => format(new Date(value), 'dd/MM/yyyy'),
     },
     { 
       field: 'customer', 
       headerName: 'Customer', 
-      flex: 1,
-      valueGetter: (value: { name: string } | null) => value?.name || 'Walk-in',
+      flex: 1.2, minWidth: 100,
+      valueGetter: (value: { name: string } | null, row) => row.customer_name || value?.name || 'Walk-in',
     },
     {
-      field: 'invoice_type',
+      field: 'payment_mode',
       headerName: 'Type',
-      width: 80,
+      flex: 0.4, minWidth: 60,
       renderCell: (params) => (
         <Chip
-          label={params.value}
+          label={params.value || 'cash'}
           size="small"
-          color={params.value === 'cash' ? 'success' : 'primary'}
+          color={params.value === 'cash' ? 'success' : params.value === 'credit' ? 'warning' : 'primary'}
           variant="outlined"
         />
       ),
     },
     { 
-      field: 'net_amount', 
+      field: 'grand_total', 
       headerName: 'Amount', 
-      width: 120,
+      flex: 0.6, minWidth: 80,
       type: 'number',
       renderCell: (params) => (
         <Typography variant="body2" fontWeight="bold">
@@ -94,12 +94,17 @@ export function SalesInvoicesPage() {
       renderCell: (params) => (
         <Box>
           <Tooltip title="View">
-            <IconButton size="small" onClick={() => navigate(`/sales/invoices/${params.row.id}`)}>
+            <IconButton size="small" onClick={() => {
+              // TODO: Implement invoice view modal
+              alert(`Invoice Details:\n\nInvoice No: ${params.row.invoice_no}\nDate: ${format(new Date(params.row.invoice_date), 'dd/MM/yyyy')}\nCustomer: ${params.row.customer_name || params.row.customer?.name || 'Walk-in'}\nTotal: ₹${params.row.grand_total?.toLocaleString('en-IN') || '0'}\nPayment: ${params.row.payment_mode || 'cash'}`);
+            }}>
               <ViewIcon fontSize="small" />
             </IconButton>
           </Tooltip>
           <Tooltip title="Print">
-            <IconButton size="small" color="primary">
+            <IconButton size="small" color="primary" onClick={() => {
+              window.print();
+            }}>
               <PrintIcon fontSize="small" />
             </IconButton>
           </Tooltip>

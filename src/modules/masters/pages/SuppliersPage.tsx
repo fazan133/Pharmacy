@@ -23,11 +23,11 @@ export function SuppliersPage() {
   );
 
   const columns: GridColDef[] = [
-    { field: 'code', headerName: 'Code', width: 100 },
-    { field: 'name', headerName: 'Name', flex: 1 },
-    { field: 'phone', headerName: 'Phone', width: 120 },
-    { field: 'city', headerName: 'City', width: 120 },
-    { field: 'gst_no', headerName: 'GST No', width: 150 },
+    { field: 'code', headerName: 'Code', flex: 0.5, minWidth: 80 },
+    { field: 'name', headerName: 'Name', flex: 1.5, minWidth: 120 },
+    { field: 'phone', headerName: 'Phone', flex: 0.7, minWidth: 100 },
+    { field: 'city', headerName: 'City', flex: 0.6, minWidth: 80 },
+    { field: 'gst_no', headerName: 'GST No', flex: 0.8, minWidth: 100 },
     {
       field: 'is_active',
       headerName: 'Status',

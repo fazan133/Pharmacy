@@ -1,12 +1,13 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, Card, CardContent, Grid2 as Grid, TextField, Button,
   Table, TableHead, TableBody, TableRow, TableCell, Typography,
-  Autocomplete, Divider, Paper, IconButton, MenuItem, Select, FormControl, InputLabel
+  Autocomplete, Divider, Paper, IconButton, MenuItem, Select, FormControl, InputLabel,
+  Popper, ClickAwayListener, Chip
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { Add as AddIcon, Delete as DeleteIcon, Save as SaveIcon } from '@mui/icons-material';
+import { Add as AddIcon, Delete as DeleteIcon, Save as SaveIcon, Close as CloseIcon } from '@mui/icons-material';
 import { format, parseISO } from 'date-fns';
 import { PageHeader, LoadingOverlay } from '@/components/common';
 import { useSuppliers, useProducts, useHsnCodes } from '@/modules/masters/hooks/useMasters';
@@ -115,6 +116,10 @@ export function PurchaseInvoiceFormPage() {
   // Dialog states
   const [supplierDialogOpen, setSupplierDialogOpen] = useState(false);
   const [productDialogOpen, setProductDialogOpen] = useState(false);
+  
+  // Batch popup state
+  const [batchPopupAnchor, setBatchPopupAnchor] = useState<HTMLElement | null>(null);
+  const [batchPopupItemId, setBatchPopupItemId] = useState<string | null>(null);
 
   // Fetch batches when product is selected (all batches for suggestions)
   const fetchBatchesForProduct = useCallback(async (productId: string) => {
@@ -498,24 +503,24 @@ export function PurchaseInvoiceFormPage() {
                   <TableCell width={60}>Pack</TableCell>
                   <TableCell width={70}>Batch</TableCell>
                   <TableCell width={70}>Expiry</TableCell>
-                  <TableCell width={45} align="right">Rate</TableCell>
-                  <TableCell width={35} align="right">Qty</TableCell>
-                  <TableCell width={30} align="right">Fr</TableCell>
-                  <TableCell width={50} align="right">Value</TableCell>
+                  <TableCell width={45} >Rate</TableCell>
+                  <TableCell width={35} >Qty</TableCell>
+                  <TableCell width={30} >Fr</TableCell>
+                  <TableCell width={50} >Value</TableCell>
                   {purchaseType === 'in_state' ? (
                     <>
-                      <TableCell width={45} align="right">SGST</TableCell>
-                      <TableCell width={45} align="right">CGST</TableCell>
+                      <TableCell width={45} >SGST</TableCell>
+                      <TableCell width={45} >CGST</TableCell>
                     </>
                   ) : (
-                    <TableCell width={45} align="right">IGST</TableCell>
+                    <TableCell width={45} >IGST</TableCell>
                   )}
-                  <TableCell width={45} align="right">MRP</TableCell>
-                  <TableCell width={35} align="right">Mr%</TableCell>
-                  <TableCell width={35} align="right">Ds%</TableCell>
-                  <TableCell width={50} align="right">GST</TableCell>
-                  <TableCell width={50} align="right">Cost</TableCell>
-                  <TableCell width={60} align="right">Net</TableCell>
+                  <TableCell width={45} >MRP</TableCell>
+                  <TableCell width={35} >Mr%</TableCell>
+                  <TableCell width={35} >Ds%</TableCell>
+                  <TableCell width={50} >GST</TableCell>
+                  <TableCell width={50} >Cost</TableCell>
+                  <TableCell width={60} >Net</TableCell>
                   <TableCell width={30}></TableCell>
                 </TableRow>
               </TableHead>
@@ -543,33 +548,23 @@ export function PurchaseInvoiceFormPage() {
                       <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>{item.packaging || '-'}</Typography>
                     </TableCell>
                     <TableCell>
-                      <Autocomplete
+                      <TextField
                         size="small"
-                        freeSolo
-                        options={item.product_id ? (productBatches[item.product_id] || []) : []}
-                        getOptionLabel={(option) => typeof option === 'string' ? option : option.batch_no}
+                        variant="standard"
+                        placeholder="Batch"
                         value={item.batch_no || ''}
-                        onChange={(_, value) => handleBatchSelect(item.id, value as any)}
-                        onInputChange={(_, value, reason) => {
-                          if (reason === 'input') updateItem(item.id, 'batch_no', value);
+                        onChange={(e) => {
+                          updateItem(item.id, 'batch_no', e.target.value);
+                          // Close popup when user types
+                          if (batchPopupAnchor) setBatchPopupAnchor(null);
                         }}
-                        renderOption={(props, option) => (
-                          <li {...props} key={typeof option === 'string' ? option : option.id}>
-                            {typeof option === 'string' ? option : (
-                              <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                                <Typography variant="body2">{option.batch_no}</Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  Exp: {option.expiry_date ? format(parseISO(option.expiry_date), 'MM/yyyy') : '-'} | 
-                                  Stock: {option.available_qty} | MRP: ₹{option.mrp}
-                                  {(option as any).supplier && ` | Sup: ${(option as any).supplier.name}`}
-                                </Typography>
-                              </Box>
-                            )}
-                          </li>
-                        )}
-                        renderInput={(params) => (
-                          <TextField {...params} placeholder="Batch" variant="standard" sx={{ minWidth: 60, '& input': { fontSize: '0.75rem' } }} />
-                        )}
+                        onFocus={(e) => {
+                          if (item.product_id && (productBatches[item.product_id]?.length || 0) > 0) {
+                            setBatchPopupItemId(item.id);
+                            setBatchPopupAnchor(e.currentTarget);
+                          }
+                        }}
+                        sx={{ minWidth: 60, '& input': { fontSize: '0.75rem' } }}
                       />
                     </TableCell>
                     <TableCell>
@@ -605,7 +600,7 @@ export function PurchaseInvoiceFormPage() {
                         type="number"
                         value={item.qty || ''}
                         onChange={(e) => updateItem(item.id, 'qty', parseInt(e.target.value) || 0)}
-                        inputProps={{ min: 0, style: { textAlign: 'right', fontSize: '0.75rem' } }}
+                        inputProps={{ min: 0, style: { fontSize: '0.75rem' } }}
                         sx={{ width: 35 }}
                       />
                     </TableCell>
@@ -616,30 +611,30 @@ export function PurchaseInvoiceFormPage() {
                         type="number"
                         value={item.free_qty || ''}
                         onChange={(e) => updateItem(item.id, 'free_qty', parseInt(e.target.value) || 0)}
-                        inputProps={{ min: 0, style: { textAlign: 'right', fontSize: '0.75rem' } }}
+                        inputProps={{ min: 0, style: { fontSize: '0.75rem' } }}
                         sx={{ width: 30 }}
                       />
                     </TableCell>
-                    <TableCell align="right">
+                    <TableCell >
                       <Typography variant="caption" sx={{ fontSize: '0.75rem' }}>
                         {item.gross_amount.toFixed(2)}
                       </Typography>
                     </TableCell>
                     {purchaseType === 'in_state' ? (
                       <>
-                        <TableCell align="right">
+                        <TableCell >
                           <Typography variant="caption" sx={{ fontSize: '0.75rem' }}>
                             {item.sgst_amount.toFixed(2)}
                           </Typography>
                         </TableCell>
-                        <TableCell align="right">
+                        <TableCell >
                           <Typography variant="caption" sx={{ fontSize: '0.75rem' }}>
                             {item.cgst_amount.toFixed(2)}
                           </Typography>
                         </TableCell>
                       </>
                     ) : (
-                      <TableCell align="right">
+                      <TableCell >
                         <Typography variant="caption" sx={{ fontSize: '0.75rem' }}>
                           {item.igst_amount.toFixed(2)}
                         </Typography>
@@ -663,7 +658,7 @@ export function PurchaseInvoiceFormPage() {
                         type="number"
                         value={item.margin_percent || ''}
                         onChange={(e) => updateItem(item.id, 'margin_percent', parseFloat(e.target.value) || 0)}
-                        inputProps={{ min: 0, max: 100, style: { textAlign: 'right', fontSize: '0.75rem' } }}
+                        inputProps={{ min: 0, max: 100, style: {  fontSize: '0.75rem' } }}
                         sx={{ width: 35 }}
                       />
                     </TableCell>
@@ -674,21 +669,21 @@ export function PurchaseInvoiceFormPage() {
                         type="number"
                         value={item.discount_percent || ''}
                         onChange={(e) => updateItem(item.id, 'discount_percent', parseFloat(e.target.value) || 0)}
-                        inputProps={{ min: 0, max: 100, style: { textAlign: 'right', fontSize: '0.75rem' } }}
+                        inputProps={{ min: 0, max: 100, style: {  fontSize: '0.75rem' } }}
                         sx={{ width: 35 }}
                       />
                     </TableCell>
-                    <TableCell align="right">
+                    <TableCell >
                       <Typography variant="caption" sx={{ fontSize: '0.75rem' }}>
                         {item.gst_amount.toFixed(2)}
                       </Typography>
                     </TableCell>
-                    <TableCell align="right">
+                    <TableCell >
                       <Typography variant="caption" sx={{ fontSize: '0.75rem' }}>
                         {item.cost_price.toFixed(2)}
                       </Typography>
                     </TableCell>
-                    <TableCell align="right">
+                    <TableCell >
                       <Typography variant="body2" fontWeight="medium" sx={{ fontSize: '0.75rem' }}>
                         ₹{item.net_amount.toFixed(2)}
                       </Typography>
@@ -813,6 +808,88 @@ export function PurchaseInvoiceFormPage() {
         }}
         product={null}
       />
+
+      {/* Batch Selection Popper */}
+      <Popper
+        open={Boolean(batchPopupAnchor)}
+        anchorEl={batchPopupAnchor}
+        placement="bottom-start"
+        style={{ zIndex: 1300 }}
+      >
+        <ClickAwayListener 
+          onClickAway={(event) => {
+            // Don't close if clicking on the anchor element (batch input field)
+            if (batchPopupAnchor && batchPopupAnchor.contains(event.target as Node)) {
+              return;
+            }
+            setBatchPopupAnchor(null);
+          }}
+        >
+          <Paper 
+            elevation={8}
+            sx={{ 
+              maxHeight: 300, 
+              overflow: 'auto',
+              minWidth: 400,
+              mt: 0.5,
+              border: '1px solid',
+              borderColor: 'divider'
+            }}
+          >
+            {batchPopupItemId && (() => {
+              const currentItem = items.find(i => i.id === batchPopupItemId);
+              const batches = currentItem?.product_id ? (productBatches[currentItem.product_id] || []) : [];
+              
+              if (batches.length === 0) {
+                return (
+                  <Box sx={{ p: 2 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      No existing batches. Type batch number manually.
+                    </Typography>
+                  </Box>
+                );
+              }
+              
+              return (
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: 'grey.100' }}>
+                      <TableCell sx={{ py: 0.5, fontSize: '0.75rem', fontWeight: 600 }}>Batch</TableCell>
+                      <TableCell sx={{ py: 0.5, fontSize: '0.75rem', fontWeight: 600 }}>Expiry</TableCell>
+                      <TableCell sx={{ py: 0.5, fontSize: '0.75rem', fontWeight: 600 }} align="right">Stock</TableCell>
+                      <TableCell sx={{ py: 0.5, fontSize: '0.75rem', fontWeight: 600 }} align="right">Rate</TableCell>
+                      <TableCell sx={{ py: 0.5, fontSize: '0.75rem', fontWeight: 600 }} align="right">MRP</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {batches.map((batch) => (
+                      <TableRow 
+                        key={batch.id} 
+                        hover 
+                        sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'primary.light', '& td': { color: 'white' } } }}
+                        onClick={() => {
+                          handleBatchSelect(batchPopupItemId, batch);
+                          setBatchPopupAnchor(null);
+                        }}
+                      >
+                        <TableCell sx={{ py: 0.5, fontSize: '0.75rem' }}>
+                          <Typography variant="body2" fontWeight={500} fontSize="0.75rem">{batch.batch_no}</Typography>
+                        </TableCell>
+                        <TableCell sx={{ py: 0.5, fontSize: '0.75rem' }}>
+                          {batch.expiry_date ? format(parseISO(batch.expiry_date), 'MM/yy') : '-'}
+                        </TableCell>
+                        <TableCell sx={{ py: 0.5, fontSize: '0.75rem' }} align="right">{batch.available_qty}</TableCell>
+                        <TableCell sx={{ py: 0.5, fontSize: '0.75rem' }} align="right">₹{batch.purchase_rate}</TableCell>
+                        <TableCell sx={{ py: 0.5, fontSize: '0.75rem' }} align="right">₹{batch.mrp}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              );
+            })()}
+          </Paper>
+        </ClickAwayListener>
+      </Popper>
     </Box>
   );
 }

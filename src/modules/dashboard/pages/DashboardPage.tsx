@@ -75,8 +75,8 @@ export function DashboardPage() {
   const { data: stats } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: async () => {
-      const [products, purchases, sales, lowStock] = await Promise.all([
-        supabase.from('product').select('id', { count: 'exact', head: true }),
+      const [products, purchases, sales, batches] = await Promise.all([
+        supabase.from('product').select('id, reorder_level', { count: 'exact' }).eq('is_active', true),
         supabase
           .from('purchase_invoice')
           .select('grand_total')
@@ -87,19 +87,33 @@ export function DashboardPage() {
           .gte('invoice_date', new Date(new Date().setDate(1)).toISOString().split('T')[0]),
         supabase
           .from('batch')
-          .select('id', { count: 'exact', head: true })
-          .lt('available_qty', 10)
-          .gt('available_qty', 0),
+          .select('product_id, available_qty'),
       ]);
 
       const totalPurchase = purchases.data?.reduce((sum, p) => sum + (p.grand_total || 0), 0) || 0;
       const totalSales = sales.data?.reduce((sum, s) => sum + (s.grand_total || 0), 0) || 0;
 
+      // Calculate low stock count based on products (same logic as LowStockPage)
+      const DEFAULT_LOW_STOCK_THRESHOLD = 10;
+      const stockByProduct: Record<string, number> = {};
+      for (const batch of (batches.data || []) as { product_id: string; available_qty: number }[]) {
+        stockByProduct[batch.product_id] = (stockByProduct[batch.product_id] || 0) + batch.available_qty;
+      }
+      
+      let lowStockCount = 0;
+      for (const product of (products.data || []) as { id: string; reorder_level: number }[]) {
+        const currentStock = stockByProduct[product.id] || 0;
+        const threshold = product.reorder_level > 0 ? product.reorder_level : DEFAULT_LOW_STOCK_THRESHOLD;
+        if (currentStock < threshold) {
+          lowStockCount++;
+        }
+      }
+
       return {
         productCount: products.count || 0,
         totalPurchase,
         totalSales,
-        lowStockCount: lowStock.count || 0,
+        lowStockCount,
       };
     },
   });

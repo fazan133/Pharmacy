@@ -24,14 +24,14 @@ export function CustomersPage() {
   );
 
   const columns: GridColDef[] = [
-    { field: 'code', headerName: 'Code', width: 100 },
-    { field: 'name', headerName: 'Name', flex: 1 },
-    { field: 'phone', headerName: 'Phone', width: 120 },
-    { field: 'city', headerName: 'City', width: 120 },
+    { field: 'code', headerName: 'Code', flex: 0.5, minWidth: 70 },
+    { field: 'name', headerName: 'Name', flex: 1.5, minWidth: 120 },
+    { field: 'phone', headerName: 'Phone', flex: 0.7, minWidth: 100 },
+    { field: 'city', headerName: 'City', flex: 0.6, minWidth: 80 },
     {
       field: 'credit_limit',
       headerName: 'Credit Limit',
-      width: 120,
+      flex: 0.6, minWidth: 80,
       type: 'number',
       valueFormatter: (value: number | null) => `₹${value?.toLocaleString() || '0'}`,
     },

@@ -36,20 +36,20 @@ export function BatchStockPage() {
     { 
       field: 'product_code', 
       headerName: 'Code', 
-      width: 100,
+      flex: 0.5, minWidth: 70,
       valueGetter: (_, row) => row.product?.code,
     },
     { 
       field: 'product_name', 
       headerName: 'Product', 
-      flex: 1,
+      flex: 1.5, minWidth: 120,
       valueGetter: (_, row) => row.product?.name,
     },
-    { field: 'batch_no', headerName: 'Batch No', width: 120 },
+    { field: 'batch_no', headerName: 'Batch', flex: 0.6, minWidth: 80 },
     { 
       field: 'expiry_date', 
       headerName: 'Expiry', 
-      width: 100,
+      flex: 0.5, minWidth: 70,
       renderCell: (params) => {
         const status = getExpiryStatus(params.value);
         return <Chip label={status.label} size="small" color={status.color} />;
@@ -58,7 +58,7 @@ export function BatchStockPage() {
     { 
       field: 'available_qty', 
       headerName: 'Stock', 
-      width: 100,
+      flex: 0.5, minWidth: 60,
       type: 'number',
       renderCell: (params) => (
         <Typography 

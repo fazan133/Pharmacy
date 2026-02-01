@@ -48,14 +48,14 @@ export function HsnCodesPage() {
   };
 
   const columns: GridColDef[] = [
-    { field: 'code', headerName: 'HSN Code', width: 120 },
-    { field: 'description', headerName: 'Description', flex: 1 },
-    { field: 'cgst_percent', headerName: 'CGST %', width: 90, type: 'number' },
-    { field: 'sgst_percent', headerName: 'SGST %', width: 90, type: 'number' },
+    { field: 'code', headerName: 'HSN Code', flex: 0.6, minWidth: 80 },
+    { field: 'description', headerName: 'Description', flex: 1.5, minWidth: 120 },
+    { field: 'cgst_percent', headerName: 'CGST %', flex: 0.4, minWidth: 60, type: 'number' },
+    { field: 'sgst_percent', headerName: 'SGST %', flex: 0.4, minWidth: 60, type: 'number' },
     { 
       field: 'total_gst', 
       headerName: 'Total GST %', 
-      width: 100, 
+      flex: 0.5, minWidth: 70, 
       type: 'number',
       valueGetter: (_value, row) => (row.cgst_percent || 0) + (row.sgst_percent || 0),
     },

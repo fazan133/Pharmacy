@@ -90,20 +90,18 @@ export const inventoryApi = {
 
   // Get low stock products
   async getLowStockProducts(): Promise<LowStockItem[]> {
-    // Get all products with reorder level
+    // Get all active products
     const { data: products, error: prodError } = await supabase
       .from('product')
       .select('*')
-      .eq('is_active', true)
-      .gt('reorder_level', 0);
+      .eq('is_active', true);
 
     if (prodError) throw prodError;
 
     // Get current stock for each product
     const { data: batches, error: batchError } = await supabase
       .from('batch')
-      .select('product_id, available_qty')
-      .gt('available_qty', 0);
+      .select('product_id, available_qty');
 
     if (batchError) throw batchError;
 
@@ -114,15 +112,20 @@ export const inventoryApi = {
     }
 
     // Find low stock products
+    // If reorder_level is set, use it; otherwise use default threshold of 10
+    const DEFAULT_LOW_STOCK_THRESHOLD = 10;
     const lowStock: LowStockItem[] = [];
+    
     for (const product of products) {
       const currentStock = stockByProduct[product.id] || 0;
-      if (currentStock < product.reorder_level) {
+      const threshold = product.reorder_level > 0 ? product.reorder_level : DEFAULT_LOW_STOCK_THRESHOLD;
+      
+      if (currentStock < threshold) {
         lowStock.push({
           ...product,
           current_stock: currentStock,
-          reorder_level: product.reorder_level,
-          shortage: product.reorder_level - currentStock,
+          reorder_level: threshold,
+          shortage: threshold - currentStock,
         });
       }
     }

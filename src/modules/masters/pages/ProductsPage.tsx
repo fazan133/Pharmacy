@@ -46,31 +46,31 @@ export function ProductsPage() {
   };
 
   const columns: GridColDef[] = [
-    { field: 'code', headerName: 'Code', width: 100 },
-    { field: 'name', headerName: 'Name', flex: 1, minWidth: 200 },
+    { field: 'code', headerName: 'Code', flex: 0.5, minWidth: 20 },
+    { field: 'name', headerName: 'Name', flex: 1.5, minWidth: 50 },
     {
       field: 'category',
       headerName: 'Category',
-      width: 120,
+      flex: 0.8, minWidth: 50,
       valueGetter: (_, row) => row.category?.name || '-',
     },
     {
       field: 'company',
       headerName: 'Company',
-      width: 120,
+      flex: 0.8, minWidth: 50,
       valueGetter: (_, row) => row.company?.name || '-',
     },
     {
       field: 'mrp',
       headerName: 'MRP',
-      width: 100,
+      flex: 0.5, minWidth: 50,
       type: 'number',
       valueFormatter: (value: number | null) => `₹${value?.toFixed(2) || '0.00'}`,
     },
     {
       field: 'gst_percent',
       headerName: 'GST %',
-      width: 80,
+      flex: 0.4, minWidth: 50,
       type: 'number',
     },
     {

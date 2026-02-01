@@ -28,30 +28,25 @@ export function PurchaseInvoicesPage() {
     { 
       field: 'invoice_no', 
       headerName: 'Invoice No', 
-      width: 150,
-      renderCell: (params) => (
-        <Typography variant="body2" color="primary" sx={{ fontWeight: 500 }}>
-          {params.value}
-        </Typography>
-      ),
+      flex: 0.8, minWidth: 100
     },
     { 
       field: 'invoice_date', 
       headerName: 'Date', 
-      width: 100,
+      flex: 0.5, minWidth: 80,
       valueFormatter: (value) => format(new Date(value), 'dd/MM/yyyy'),
     },
     { 
       field: 'supplier', 
       headerName: 'Supplier', 
-      flex: 1,
+      flex: 1.2, minWidth: 100,
       valueGetter: (value: { name: string }) => value?.name || '-',
     },
-    { field: 'supplier_invoice_no', headerName: 'Supplier Inv#', width: 120 },
+    { field: 'supplier_invoice_no', headerName: 'Supplier Inv#', flex: 0.6, minWidth: 80 },
     { 
       field: 'subtotal', 
       headerName: 'Gross', 
-      width: 100,
+      flex: 0.5, minWidth: 70,
       type: 'number',
       valueFormatter: (value: number | null) => `₹${value?.toLocaleString('en-IN') || '0'}`,
     },
@@ -68,7 +63,7 @@ export function PurchaseInvoicesPage() {
       width: 120,
       type: 'number',
       renderCell: (params) => (
-        <Typography variant="body2" fontWeight="bold">
+        <Typography variant="body2" fontWeight="bold" color="primary">
           ₹{params.value?.toLocaleString('en-IN') || '0'}
         </Typography>
       ),

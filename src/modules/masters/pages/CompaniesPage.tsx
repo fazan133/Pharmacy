@@ -42,9 +42,9 @@ export function CompaniesPage() {
   };
 
   const columns: GridColDef[] = [
-    { field: 'code', headerName: 'Code', width: 100 },
-    { field: 'name', headerName: 'Brand Name', flex: 1 },
-    { field: 'description', headerName: 'Description', flex: 1 },
+    { field: 'code', headerName: 'Code', flex: 0.5, minWidth: 70 },
+    { field: 'name', headerName: 'Brand Name', flex: 1, minWidth: 100 },
+    { field: 'description', headerName: 'Description', flex: 1.5, minWidth: 120 },
     {
       field: 'is_active',
       headerName: 'Status',
