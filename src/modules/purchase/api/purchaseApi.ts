@@ -232,16 +232,45 @@ export const createPurchaseInvoiceWithItems = async (
 
   // Create batches and invoice items
   for (const item of items) {
-    // Create batch
-    const batch = await batchApi.create({
-      product_id: item.product_id,
-      batch_no: item.batch_no,
-      mfg_date: item.mfg_date,
-      expiry_date: item.expiry_date,
-      purchase_rate: item.purchase_rate,
-      mrp: item.mrp,
-      available_qty: item.qty + item.free_qty,
-    });
+    // Check if batch already exists for this product
+    const { data: existingBatch } = await supabase
+      .from('batch')
+      .select('*')
+      .eq('product_id', item.product_id)
+      .eq('batch_no', item.batch_no)
+      .single();
+
+    let batch: Batch;
+    
+    if (existingBatch) {
+      // Update existing batch - add to available qty
+      const { data: updatedBatch, error: updateError } = await supabase
+        .from('batch')
+        .update({
+          available_qty: existingBatch.available_qty + item.qty + item.free_qty,
+          purchase_rate: item.purchase_rate,
+          mrp: item.mrp,
+          expiry_date: item.expiry_date,
+          mfg_date: item.mfg_date,
+        })
+        .eq('id', existingBatch.id)
+        .select()
+        .single();
+      
+      if (updateError) throw updateError;
+      batch = updatedBatch;
+    } else {
+      // Create new batch
+      batch = await batchApi.create({
+        product_id: item.product_id,
+        batch_no: item.batch_no,
+        mfg_date: item.mfg_date,
+        expiry_date: item.expiry_date,
+        purchase_rate: item.purchase_rate,
+        mrp: item.mrp,
+        available_qty: item.qty + item.free_qty,
+      });
+    }
 
     // Calculate item totals
     const grossAmount = item.qty * item.purchase_rate;
