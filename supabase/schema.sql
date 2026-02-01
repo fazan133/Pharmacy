@@ -205,6 +205,7 @@ CREATE TABLE product (
     reorder_level INTEGER DEFAULT 0,
     barcode VARCHAR(50),
     rack_location VARCHAR(50),
+    image_url TEXT,
     is_active BOOLEAN NOT NULL DEFAULT true,
     is_hidden BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

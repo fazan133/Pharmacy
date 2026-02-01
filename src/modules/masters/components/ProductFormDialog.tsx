@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Grid2 as Grid,
   TextField,
@@ -13,9 +13,18 @@ import {
   Typography,
   Divider,
   Box,
+  Avatar,
+  Button,
+  CircularProgress,
 } from '@mui/material';
-import { AutoMode as AutoCodeIcon, Add as AddIcon } from '@mui/icons-material';
+import { 
+  AutoMode as AutoCodeIcon, 
+  Add as AddIcon,
+  CloudUpload as UploadIcon,
+  Delete as DeleteIcon,
+} from '@mui/icons-material';
 import { FormDialog } from '@/components/common';
+import { supabase } from '@/api/supabase';
 import {
   useCreateProduct,
   useUpdateProduct,
@@ -62,12 +71,16 @@ const initialFormData: Partial<ProductInsert> = {
   reorder_level: 0,
   barcode: '',
   rack_location: '',
+  image_url: null,
   is_active: true,
   is_hidden: false,
 };
 
 export function ProductFormDialog({ open, onClose, product }: ProductFormDialogProps) {
   const [formData, setFormData] = useState<Partial<ProductInsert>>(initialFormData);
+  const [uploading, setUploading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Quick add dialogs state
   const [quickAddDialog, setQuickAddDialog] = useState<{
@@ -118,11 +131,14 @@ export function ProductFormDialog({ open, onClose, product }: ProductFormDialogP
         reorder_level: product.reorder_level,
         barcode: product.barcode || '',
         rack_location: product.rack_location || '',
+        image_url: product.image_url || null,
         is_active: product.is_active,
         is_hidden: product.is_hidden,
       });
+      setImagePreview(product.image_url || null);
     } else {
       setFormData(initialFormData);
+      setImagePreview(null);
     }
   }, [product, open]);
 
@@ -145,6 +161,71 @@ export function ProductFormDialog({ open, onClose, product }: ProductFormDialogP
       setFormData((prev) => ({ ...prev, code }));
     } catch (error) {
       console.error('Failed to generate code:', error);
+    }
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Image size should be less than 2MB');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      // Create a unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `products/${fileName}`;
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(filePath);
+
+      setImagePreview(publicUrl);
+      setFormData((prev) => ({ ...prev, image_url: publicUrl }));
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+      alert('Failed to upload image. Make sure storage bucket "product-images" exists.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    if (formData.image_url) {
+      try {
+        // Extract file path from URL
+        const urlParts = formData.image_url.split('/product-images/');
+        if (urlParts.length > 1) {
+          const filePath = urlParts[1];
+          await supabase.storage.from('product-images').remove([filePath]);
+        }
+      } catch (error) {
+        console.error('Failed to delete image:', error);
+      }
+    }
+    setImagePreview(null);
+    setFormData((prev) => ({ ...prev, image_url: null }));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -254,33 +335,86 @@ export function ProductFormDialog({ open, onClose, product }: ProductFormDialogP
           </Typography>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <TextField
-            label="Code"
-            value={formData.code}
-            onChange={(e) => handleChange('code', e.target.value)}
-            required
-            fullWidth
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton size="small" onClick={handleGenerateCode}>
-                    <AutoCodeIcon />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
+        {/* Product Image */}
+        <Grid size={{ xs: 12, sm: 3 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center', 
+            gap: 1,
+            p: 1,
+            border: '1px dashed',
+            borderColor: 'divider',
+            borderRadius: 1,
+          }}>
+            <Avatar
+              src={imagePreview || undefined}
+              variant="rounded"
+              sx={{ width: 100, height: 100, bgcolor: 'grey.200' }}
+            >
+              {!imagePreview && <UploadIcon sx={{ fontSize: 40, color: 'grey.500' }} />}
+            </Avatar>
+            <input
+              type="file"
+              accept="image/*"
+              hidden
+              ref={fileInputRef}
+              onChange={handleImageUpload}
+            />
+            <Box sx={{ display: 'flex', gap: 0.5 }}>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                startIcon={uploading ? <CircularProgress size={16} /> : <UploadIcon />}
+              >
+                {uploading ? 'Uploading...' : 'Upload'}
+              </Button>
+              {imagePreview && (
+                <IconButton 
+                  size="small" 
+                  color="error"
+                  onClick={handleRemoveImage}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              )}
+            </Box>
+          </Box>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 8 }}>
-          <TextField
-            label="Name"
-            value={formData.name}
-            onChange={(e) => handleChange('name', e.target.value)}
-            required
-            fullWidth
-          />
+        <Grid size={{ xs: 12, sm: 9 }}>
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, sm: 5 }}>
+              <TextField
+                label="Code"
+                value={formData.code}
+                onChange={(e) => handleChange('code', e.target.value)}
+                required
+                fullWidth
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton size="small" onClick={handleGenerateCode}>
+                        <AutoCodeIcon />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 7 }}>
+              <TextField
+                label="Name"
+                value={formData.name}
+                onChange={(e) => handleChange('name', e.target.value)}
+                required
+                fullWidth
+              />
+            </Grid>
+          </Grid>
         </Grid>
 
         <Grid size={{ xs: 12, sm: 4 }}>

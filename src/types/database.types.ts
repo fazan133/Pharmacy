@@ -352,6 +352,7 @@ export interface Database {
           reorder_level: number;
           barcode: string | null;
           rack_location: string | null;
+          image_url: string | null;
           is_active: boolean;
           is_hidden: boolean;
           created_at: string;
@@ -378,6 +379,7 @@ export interface Database {
           reorder_level?: number;
           barcode?: string | null;
           rack_location?: string | null;
+          image_url?: string | null;
           is_active?: boolean;
           is_hidden?: boolean;
         };
@@ -401,6 +403,7 @@ export interface Database {
           reorder_level?: number;
           barcode?: string | null;
           rack_location?: string | null;
+          image_url?: string | null;
           is_active?: boolean;
           is_hidden?: boolean;
         };
