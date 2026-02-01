@@ -1,0 +1,261 @@
+import { useState, useEffect } from 'react';
+import { Grid2 as Grid, TextField, FormControlLabel, Checkbox, InputAdornment, IconButton } from '@mui/material';
+import { AutoMode as AutoCodeIcon } from '@mui/icons-material';
+import { FormDialog } from '@/components/common';
+import { useCreateSupplier, useUpdateSupplier } from '../hooks/useMasters';
+import { supplierApi } from '../api/mastersApi';
+import type { Supplier, SupplierInsert } from '@/types/database.types';
+
+interface SupplierFormDialogProps {
+  open: boolean;
+  onClose: () => void;
+  supplier: Supplier | null;
+}
+
+const initialData: Partial<SupplierInsert> = {
+  code: '',
+  name: '',
+  contact_person: '',
+  phone: '',
+  email: '',
+  address: '',
+  city: '',
+  state: '',
+  pincode: '',
+  gst_no: '',
+  drug_license_no: '',
+  credit_days: 0,
+  credit_limit: 0,
+  opening_balance: 0,
+  is_active: true,
+  is_hidden: false,
+};
+
+export function SupplierFormDialog({ open, onClose, supplier }: SupplierFormDialogProps) {
+  const [formData, setFormData] = useState<Partial<SupplierInsert>>(initialData);
+
+  const createMutation = useCreateSupplier();
+  const updateMutation = useUpdateSupplier();
+
+  const isEditing = !!supplier;
+  const isSaving = createMutation.isPending || updateMutation.isPending;
+
+  useEffect(() => {
+    if (supplier) {
+      setFormData({ ...supplier });
+    } else {
+      setFormData(initialData);
+    }
+  }, [supplier, open]);
+
+  const handleChange = (field: keyof SupplierInsert, value: unknown) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleGenerateCode = async () => {
+    try {
+      const code = await supplierApi.generateCode();
+      setFormData((prev) => ({ ...prev, code }));
+    } catch (error) {
+      console.error('Failed to generate code:', error);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!formData.code || !formData.name) return;
+
+    if (isEditing && supplier) {
+      await updateMutation.mutateAsync({ id: supplier.id, data: formData });
+    } else {
+      await createMutation.mutateAsync(formData as SupplierInsert);
+    }
+    onClose();
+  };
+
+  return (
+    <FormDialog
+      open={open}
+      onClose={onClose}
+      title={isEditing ? 'Edit Supplier' : 'Add Supplier'}
+      onSave={handleSave}
+      isSaving={isSaving}
+      maxWidth="md"
+      disableSave={!formData.code || !formData.name}
+    >
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 12, sm: 4 }}>
+          <TextField
+            label="Code"
+            value={formData.code}
+            onChange={(e) => handleChange('code', e.target.value)}
+            required
+            fullWidth
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={handleGenerateCode}>
+                    <AutoCodeIcon />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 8 }}>
+          <TextField
+            label="Name"
+            value={formData.name}
+            onChange={(e) => handleChange('name', e.target.value)}
+            required
+            fullWidth
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <TextField
+            label="Contact Person"
+            value={formData.contact_person}
+            onChange={(e) => handleChange('contact_person', e.target.value)}
+            fullWidth
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <TextField
+            label="Phone"
+            value={formData.phone}
+            onChange={(e) => handleChange('phone', e.target.value)}
+            fullWidth
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <TextField
+            label="Email"
+            type="email"
+            value={formData.email}
+            onChange={(e) => handleChange('email', e.target.value)}
+            fullWidth
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <TextField
+            label="GST No"
+            value={formData.gst_no}
+            onChange={(e) => handleChange('gst_no', e.target.value)}
+            fullWidth
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <TextField
+            label="Drug License No"
+            value={formData.drug_license_no}
+            onChange={(e) => handleChange('drug_license_no', e.target.value)}
+            fullWidth
+          />
+        </Grid>
+
+        <Grid size={12}>
+          <TextField
+            label="Address"
+            value={formData.address}
+            onChange={(e) => handleChange('address', e.target.value)}
+            fullWidth
+            multiline
+            rows={2}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 4 }}>
+          <TextField
+            label="City"
+            value={formData.city}
+            onChange={(e) => handleChange('city', e.target.value)}
+            fullWidth
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 4 }}>
+          <TextField
+            label="State"
+            value={formData.state}
+            onChange={(e) => handleChange('state', e.target.value)}
+            fullWidth
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 4 }}>
+          <TextField
+            label="Pincode"
+            value={formData.pincode}
+            onChange={(e) => handleChange('pincode', e.target.value)}
+            fullWidth
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 4 }}>
+          <TextField
+            label="Credit Days"
+            type="number"
+            value={formData.credit_days}
+            onChange={(e) => handleChange('credit_days', parseInt(e.target.value) || 0)}
+            fullWidth
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 4 }}>
+          <TextField
+            label="Credit Limit"
+            type="number"
+            value={formData.credit_limit}
+            onChange={(e) => handleChange('credit_limit', parseFloat(e.target.value) || 0)}
+            fullWidth
+            InputProps={{
+              startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+            }}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 4 }}>
+          <TextField
+            label="Opening Balance"
+            type="number"
+            value={formData.opening_balance}
+            onChange={(e) => handleChange('opening_balance', parseFloat(e.target.value) || 0)}
+            fullWidth
+            InputProps={{
+              startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+            }}
+          />
+        </Grid>
+
+        <Grid size={6}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={formData.is_active}
+                onChange={(e) => handleChange('is_active', e.target.checked)}
+              />
+            }
+            label="Active"
+          />
+        </Grid>
+
+        <Grid size={6}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={formData.is_hidden}
+                onChange={(e) => handleChange('is_hidden', e.target.checked)}
+              />
+            }
+            label="Hidden"
+          />
+        </Grid>
+      </Grid>
+    </FormDialog>
+  );
+}

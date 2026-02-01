@@ -1,0 +1,9 @@
+export { ProductsPage } from './pages/ProductsPage';
+export { CategoriesPage } from './pages/CategoriesPage';
+export { CompaniesPage } from './pages/CompaniesPage';
+export { HsnCodesPage } from './pages/HsnCodesPage';
+export { DrugSchedulesPage } from './pages/DrugSchedulesPage';
+export { DrugFormulasPage } from './pages/DrugFormulasPage';
+export { ProductTypesPage } from './pages/ProductTypesPage';
+export { SuppliersPage } from './pages/SuppliersPage';
+export { CustomersPage } from './pages/CustomersPage';
