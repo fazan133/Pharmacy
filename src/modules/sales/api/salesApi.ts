@@ -100,16 +100,28 @@ export const salesInvoiceApi = {
     const now = new Date();
     const currentYear = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
     const fyYear = `${currentYear.toString().slice(2)}${(currentYear + 1).toString().slice(2)}`;
+    const prefix = `SI/${fyYear}/`;
     
-    const { count, error } = await supabase
+    // Get the latest invoice number for this financial year
+    const { data, error } = await supabase
       .from('sales_invoice')
-      .select('*', { count: 'exact', head: true })
-      .gte('invoice_date', `${currentYear}-04-01`);
+      .select('invoice_no')
+      .like('invoice_no', `${prefix}%`)
+      .order('invoice_no', { ascending: false })
+      .limit(1);
 
     if (error) throw error;
     
-    const nextNum = (count || 0) + 1;
-    return `SI/${fyYear}/${nextNum.toString().padStart(5, '0')}`;
+    let nextNum = 1;
+    if (data && data.length > 0) {
+      const lastNo = data[0].invoice_no;
+      const numPart = lastNo.split('/').pop();
+      if (numPart) {
+        nextNum = parseInt(numPart, 10) + 1;
+      }
+    }
+    
+    return `${prefix}${nextNum.toString().padStart(5, '0')}`;
   },
 };
 
